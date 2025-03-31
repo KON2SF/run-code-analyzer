@@ -277,7 +277,7 @@ describe('main run Tests', () => {
         expect(dependencies.failCallHistory[0].failMessage).toContain(MESSAGES.SF_CLI_INSTALL_FAILED)
     })
 
-    it('Test when sfdx-scanner plugin is not already installed and we install it successfully', async () => {
+    it('Test when code-analyzer plugin is not already installed and we install it successfully', async () => {
         commandExecutor.isMinimumCodeAnalyzerPluginInstalledReturnValue = false
         await main.run(dependencies, commandExecutor, resultsFactory, summarizer)
 
@@ -293,7 +293,7 @@ describe('main run Tests', () => {
         expect(dependencies.failCallHistory).toHaveLength(0)
     })
 
-    it('Test when sfdx-scanner plugin is not already installed and we fail to install it', async () => {
+    it('Test when code-analyzer plugin is not already installed and we fail to install it', async () => {
         commandExecutor.isMinimumCodeAnalyzerPluginInstalledReturnValue = false
         commandExecutor.installCodeAnalyzerPluginReturnValue = false
         await main.run(dependencies, commandExecutor, resultsFactory, summarizer)
