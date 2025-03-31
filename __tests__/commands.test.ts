@@ -120,10 +120,10 @@ describe('RuntimeCommandExecutor Tests', () => {
         it('Check when code-analyzer plugin is installed with a version less than the minimum version', async () => {
             dependencies.execCommandReturnValue = {
                 exitCode: 0,
-                stdout: createSampleResponse('5.0.0-beta.2'),
+                stdout: createSampleResponse('5.0.0-alpha.2'),
                 stderr: ''
             }
-            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
             expect(dependencies.execCommandCallHistory).toHaveLength(1)
             expect(dependencies.execCommandCallHistory).toContainEqual({
@@ -137,10 +137,10 @@ describe('RuntimeCommandExecutor Tests', () => {
         it('Check when code-analyzer plugin is installed with a version exactly same as minimum version', async () => {
             dependencies.execCommandReturnValue = {
                 exitCode: 0,
-                stdout: createSampleResponse('5.0.0'),
+                stdout: createSampleResponse('5.0.0-beta.0'),
                 stderr: ''
             }
-            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
             expect(dependencies.execCommandCallHistory).toHaveLength(1)
             expect(dependencies.execCommandCallHistory).toContainEqual({
@@ -151,7 +151,7 @@ describe('RuntimeCommandExecutor Tests', () => {
             expect(tf).toEqual(true)
         })
 
-        it.each(['5.0.0', '5.1.3'])(
+        it.each(['5.0.0-beta.2', '5.0.0', '5.1.3'])(
             'Check when code-analyzer plugin is installed with a version %s greater than the minimum version',
             async versionToTest => {
                 dependencies.execCommandReturnValue = {
@@ -159,7 +159,7 @@ describe('RuntimeCommandExecutor Tests', () => {
                     stdout: createSampleResponse(versionToTest),
                     stderr: ''
                 }
-                const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+                const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
                 expect(dependencies.execCommandCallHistory).toHaveLength(1)
                 expect(dependencies.execCommandCallHistory).toContainEqual({
@@ -173,7 +173,7 @@ describe('RuntimeCommandExecutor Tests', () => {
 
         it('Check when code-analyzer plugin is not installed', async () => {
             dependencies.execCommandReturnValue = { exitCode: 1, stdout: '', stderr: '{ "error": {} }' }
-            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
             expect(dependencies.execCommandCallHistory).toHaveLength(1)
             expect(dependencies.execCommandCallHistory).toContainEqual({
@@ -186,7 +186,7 @@ describe('RuntimeCommandExecutor Tests', () => {
 
         it('When sf command unexpectedly gives invalid json back we should not blow up', async () => {
             dependencies.execCommandReturnValue = { exitCode: 0, stdout: 'oops: this not valid json', stderr: '' }
-            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
             expect(dependencies.execCommandCallHistory).toHaveLength(1)
             expect(dependencies.execCommandCallHistory).toContainEqual({
@@ -199,7 +199,7 @@ describe('RuntimeCommandExecutor Tests', () => {
 
         it('When sf command unexpectedly gives multiple plugin results back we should not blow up', async () => {
             dependencies.execCommandReturnValue = { exitCode: 0, stdout: '[{},{}]', stderr: '' }
-            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0')
+            const tf: boolean = await commandExecutor.isMinimumCodeAnalyzerPluginInstalled('5.0.0-beta.0')
 
             expect(dependencies.execCommandCallHistory).toHaveLength(1)
             expect(dependencies.execCommandCallHistory).toContainEqual({

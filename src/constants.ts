@@ -1,4 +1,4 @@
-export const MIN_CODE_ANALYZER_VERSION_REQUIRED = '5.0.0'
+export const MIN_CODE_ANALYZER_VERSION_REQUIRED = '5.0.0-beta.0'
 
 /* eslint-disable prettier/prettier, prefer-template */
 export const MESSAGES = {
