@@ -11,7 +11,7 @@ The `run-code-analyzer` GitHub Action scans your code for violations using
 the results as a job summary.
 
 # Version: v2
-The `forcedotcom/run-code-analyzer@v2` GitHub Action is based on [Salesforce Code Analyzer v5.x (Beta)](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html), which is the new `code-analyzer` Salesforce CLI plugin.
+The `forcedotcom/run-code-analyzer@v2` GitHub Action is based on [Salesforce Code Analyzer v5.x](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html), which is the `code-analyzer` Salesforce CLI plugin.
 
 ## v2 Inputs
 * <b>`run-arguments`</b> *(Default: `--view detail --output-file sfca_results.json`)*
@@ -41,7 +41,7 @@ The `forcedotcom/run-code-analyzer@v2` GitHub Action is based on [Salesforce Cod
 This `run-code-analyzer@v2` action won't exit your GitHub workflow when it finds violations. We recommend that you add a subsequent step to your workflow that uses the available outputs to determine how your workflow should proceed.
 
 ## Environment Prerequisites
-The [Salesforce Code Analyzer v5.x (Beta)](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html) and its bundled engines can each have their own set of requirements in order to run successfully. So we recommend that you set up your GitHub runner(s) with this software:
+The [Salesforce Code Analyzer v5.x](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html) and its bundled engines can each have their own set of requirements in order to run successfully. So we recommend that you set up your GitHub runner(s) with this software:
 * `node` version 20.9.0 or greater
   * Required by all engines.
 * `java` version 11 or greater
@@ -100,9 +100,9 @@ The [Salesforce Code Analyzer v5.x (Beta)](https://developer.salesforce.com/docs
 The `forcedotcom/run-code-analyzer@v1` GitHub Action is based on [Salesforce Code Analyzer v4.x](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer-3x.html), which is the original `@salesforce/sfdx-scanner` Salesforce CLI plugin.
 
 **Note:**
-> We plan to stop supporting v4.x of Code Analyzer in the coming months. We highly recommend that you start using v5.x, which is currently in Beta. For information on v5.x, see https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html.
->
-> Because we'll soon stop supporting v4.x, we also recommend that you use the `run-code-analyzer@v2` GitHub Action, because it's based on v5.x. (see [above](./README.md#run-salesforce-code-analyzer---github-action))
+> Starting May 1, 2025, we no longer support v4.x of Code Analyzer. You should use v5.x of Code Analyzer instead. See https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/code-analyzer.html. For information about migrating from v4.x to v5.x, see https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/guide/migrate.html.
+
+> We recommend that you use the `run-code-analyzer@v2` GitHub Action, because it's based on v5.x. (see [above](./README.md#run-salesforce-code-analyzer---github-action))
 
 * <b>`run-command`</b>  *(Default: `run`)*
   * Specifies the Salesforce Code Analyzer command to run.<br/>

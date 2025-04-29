@@ -117,7 +117,7 @@ describe('RuntimeCommandExecutor Tests', () => {
             '  }\n' +
             ']'
 
-        it('Check when scanner plugin is installed with a version less than the minimum version', async () => {
+        it('Check when code-analyzer plugin is installed with a version less than the minimum version', async () => {
             dependencies.execCommandReturnValue = {
                 exitCode: 0,
                 stdout: createSampleResponse('5.0.0-alpha.2'),
