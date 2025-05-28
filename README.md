@@ -107,7 +107,7 @@ The `forcedotcom/run-code-analyzer@v1` GitHub Action is based on [Salesforce Cod
 * <b>`run-command`</b>  *(Default: `run`)*
   * Specifies the Salesforce Code Analyzer command to run.<br/>
     Possible values are: *`run`, `run dfa`*.<br/>
-  * For more info on Code Analyzer, read our [documentation](https://forcedotcom.github.io/code-analyzer).
+  * For more info on Code Analyzer, read our [documentation](https://developer.salesforce.com/docs/platform/salesforce-code-analyzer/overview).
 * <b>`run-arguments`</b>  *(Default: `--normalize-severity`)*
   * Specifies arguments passed to the specified `run-command` value.<br/>
     The arguments provided must include *`--normalize-severity`*.<br/>
@@ -115,8 +115,8 @@ The `forcedotcom/run-code-analyzer@v1` GitHub Action is based on [Salesforce Cod
     If an output file isn’t specified, results are written to GitHub workflow run logs and a
     *SalesforceCodeAnalyzerResults.json* file is included in the uploaded artifact.
   * For a full list of acceptable arguments, read the appropriate Command Reference:
-    * [sf scanner run](https://forcedotcom.github.io/code-analyzer/en/v3.x/scanner-commands/run)
-    * [sf scanner run dfa](https://forcedotcom.github.io/code-analyzer/en/v3.x/scanner-commands/dfa)
+    * [sf scanner run](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_scanner_commands_unified.htm#cli_reference_scanner_run_unified)
+    * [sf scanner run dfa](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference_scanner_commands_unified.htm#cli_reference_scanner_run_dfa_unified)
 * <b>`results-artifact-name`</b>  *(Default: `code-analyzer-results`)*
   * Specifies the name of the zip archive job artifact where the results output file is uploaded.
 
