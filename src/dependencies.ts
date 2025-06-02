@@ -2,9 +2,11 @@ import { mergeWithProcessEnvVars } from './utils'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
+import * as github from '@actions/github'
 import { CommandOutput, EnvironmentVariables, Inputs } from './types'
 import { ArtifactClient } from '@actions/artifact/lib/internal/client'
 import fs from 'fs'
+import { MESSAGE_FCNS } from './constants'
 
 const COMMAND_NOT_FOUND_EXIT_CODE = 127
 
@@ -16,11 +18,19 @@ export interface Dependencies {
 
     endGroup(): void
 
+    isPullRequest(): boolean
+
     getInputs(): Inputs
+
+    getChangedFiles(githubToken: string): Promise<string[]>
 
     execCommand(command: string, envVars?: EnvironmentVariables, runSilently?: boolean): Promise<CommandOutput>
 
     uploadArtifact(artifactName: string, artifactFiles: string[]): Promise<void>
+
+    createActionSummaryLink(githubToken: string): Promise<string>
+
+    createPullRequestReview(githubToken: string, reviewBody: string): Promise<number>
 
     setOutput(name: string, value: string): void
 
@@ -42,6 +52,7 @@ export interface Dependencies {
  */
 export class RuntimeDependencies implements Dependencies {
     private readonly artifactClient: ArtifactClient
+
     constructor(artifactClient: ArtifactClient = new DefaultArtifactClient()) {
         this.artifactClient = artifactClient
     }
@@ -54,11 +65,93 @@ export class RuntimeDependencies implements Dependencies {
         core.endGroup()
     }
 
+    isPullRequest(): boolean {
+        return github.context.payload.pull_request !== undefined
+    }
+
     getInputs(): Inputs {
         return {
             runArguments: core.getInput('run-arguments'),
-            resultsArtifactName: core.getInput('results-artifact-name')
+            resultsArtifactName: core.getInput('results-artifact-name'),
+            githubToken: core.getInput('github-token')
         }
+    }
+
+    // istanbul ignore next - Unit testing this method is excessively difficult, so it's being covered with E2E tests instead
+    async getChangedFiles(githubToken: string): Promise<string[]> {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const prNumber: number = github.context.payload.pull_request!.number
+        const octokit = github.getOctokit(githubToken)
+        const changedFiles: string[] = []
+        const perPage = 100
+        let page = 1
+        let files
+
+        do {
+            const response = await octokit.rest.pulls.listFiles({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                pull_number: prNumber,
+                per_page: perPage,
+                page
+            })
+            files = response.data
+            for (const file of files) {
+                changedFiles.push(file.filename)
+            }
+            page += 1
+        } while (files.length === perPage)
+        return changedFiles
+    }
+
+    // istanbul ignore next - A direct test of this method would be nice, but it's somewhat excessive
+    async createActionSummaryLink(githubToken: string): Promise<string> {
+        const owner = github.context.repo.owner
+        const repo = github.context.repo.repo
+        const runId = github.context.runId
+        const runAttempt = github.context.runAttempt
+        const octokit = github.getOctokit(githubToken)
+        let matchingJob: { id: number } | undefined
+        try {
+            const { data: workflow_run } = await octokit.rest.actions.listJobsForWorkflowRun({
+                owner,
+                repo,
+                run_id: runId
+            })
+            const matrix = process.env.matrix ? JSON.parse(process.env.matrix) : undefined
+            const jobName = `${github.context.job}${matrix ? ` (${Object.values(matrix).join(', ')})` : ''}`
+            matchingJob = workflow_run.jobs.find(job => job.name === jobName)
+        } catch (error) {
+            core.warning(MESSAGE_FCNS.FAILED_TO_READ_JOBS((error as Error).stack ?? (error as Error).message))
+            matchingJob = undefined
+        }
+        // Infuriatingly, there's no way to get the job's display name from within the action context, and the github API
+        // call _only_ returns the display name. So if the user assigns the job a custom name, or does shenanigans with
+        // matrices, then we can't link directly to the table, and have to link to just the page itself and expect the user]
+        // to scroll down the table themselves.
+        if (matchingJob) {
+            return `https://github.com/${owner}/${repo}/actions/runs/${runId}/attempts/${runAttempt}#summary-${matchingJob.id}`
+        } else {
+            return `https://github.com/${owner}/${repo}/actions/runs/${runId}/attempts/${runAttempt}`
+        }
+    }
+
+    async createPullRequestReview(githubToken: string, reviewBody: string): Promise<number> {
+        const owner = github.context.repo.owner
+        const repo = github.context.repo.repo
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const prNumber: number = github.context.payload.pull_request!.number
+        const octokit = github.getOctokit(githubToken)
+        const {
+            data: { id }
+        } = await octokit.rest.pulls.createReview({
+            owner,
+            repo,
+            pull_number: prNumber,
+            event: 'COMMENT',
+            body: reviewBody
+        })
+        return id
     }
 
     async execCommand(command: string, envVars: EnvironmentVariables = {}, silent = false): Promise<CommandOutput> {

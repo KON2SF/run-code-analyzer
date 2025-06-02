@@ -123,6 +123,108 @@ describe('main run Tests', () => {
         expect(dependencies.failCallHistory).toHaveLength(0)
     })
 
+    it('When running on a pull request with the correct permissions, a review is created', async () => {
+        dependencies.getInputsReturnValue = {
+            runArguments: '-f myFile.html --view table',
+            resultsArtifactName: 'salesforce-code-analyzer-results',
+            githubToken: 'dummyToken'
+        }
+        dependencies.isPullRequestReturnValue = true
+        dependencies.getChangedFilesCallback = async () => ['dummyfile1.js', 'dummyfile2.js']
+        dependencies.createPullRequestReviewCallback = async () => 7
+        await main.run(dependencies, commandExecutor, resultsFactory, summarizer)
+
+        expect(commandExecutor.isSalesforceCliInstalledCallCount).toEqual(1)
+
+        expect(commandExecutor.runCodeAnalyzerCallHistory).toHaveLength(1)
+        expect(commandExecutor.runCodeAnalyzerCallHistory).toContainEqual({
+            runArguments: '-f myFile.html --view table --output-file sfca_results.json' // We add in at least one json file
+        })
+
+        expect(dependencies.uploadArtifactCallHistory).toHaveLength(1)
+        expect(dependencies.uploadArtifactCallHistory).toContainEqual({
+            artifactName: 'salesforce-code-analyzer-results',
+            artifactFiles: ['myFile.html'] // Our json file doesn't get included since the user didn't specify it
+        })
+
+        expect(resultsFactory.createResultsCallHistory).toHaveLength(1)
+        expect(resultsFactory.createResultsCallHistory).toContainEqual({
+            resultsFile: 'sfca_results.json' // We have our added json file to parse
+        })
+
+        expect(dependencies.setOutputCallHistory).toContainEqual({
+            name: 'review-id',
+            value: `7`
+        })
+        expect(dependencies.warnCallHistory).toHaveLength(0)
+    })
+
+    it.each([
+        {
+            case: 'running on a pull request with a token that cannot READ pull requests',
+            expectation: 'no review is created, and warnings are issued',
+            isPullRequest: true,
+            getChangedFilesCallback: async () => {
+                throw new Error('Could not Read PR')
+            },
+            createPullRequestReviewCallback: async () => {
+                throw new Error('Could not Write PR')
+            },
+            expectedWarnings: 1
+        },
+        {
+            case: 'running on a pull request with a token that cannot WRITE to pull requests',
+            expectation: 'no review is created, and warnings are issued',
+            isPullRequest: true,
+            getChangedFilesCallback: async () => [],
+            createPullRequestReviewCallback: async () => {
+                throw new Error('Could not Write PR')
+            },
+            expectedWarnings: 1
+        },
+        {
+            case: 'NOT running on a pull request',
+            expectation: 'no review is created',
+            isPullRequest: false,
+            getChangedFilesCallback: async () => [],
+            createPullRequestReviewCallback: async () => 7,
+            expectedWarnings: 0
+        }
+    ])(
+        'When $case, $expectation',
+        async ({ isPullRequest, getChangedFilesCallback, createPullRequestReviewCallback, expectedWarnings }) => {
+            dependencies.getInputsReturnValue = {
+                runArguments: '-f myFile.html --view table',
+                resultsArtifactName: 'salesforce-code-analyzer-results',
+                githubToken: 'dummyToken'
+            }
+            dependencies.isPullRequestReturnValue = isPullRequest
+            dependencies.getChangedFilesCallback = getChangedFilesCallback
+            dependencies.createPullRequestReviewCallback = createPullRequestReviewCallback
+            await main.run(dependencies, commandExecutor, resultsFactory, summarizer)
+
+            expect(commandExecutor.isSalesforceCliInstalledCallCount).toEqual(1)
+
+            expect(commandExecutor.runCodeAnalyzerCallHistory).toHaveLength(1)
+            expect(commandExecutor.runCodeAnalyzerCallHistory).toContainEqual({
+                runArguments: '-f myFile.html --view table --output-file sfca_results.json' // We add in at least one json file
+            })
+
+            expect(dependencies.uploadArtifactCallHistory).toHaveLength(1)
+            expect(dependencies.uploadArtifactCallHistory).toContainEqual({
+                artifactName: 'salesforce-code-analyzer-results',
+                artifactFiles: ['myFile.html'] // Our json file doesn't get included since the user didn't specify it
+            })
+
+            expect(resultsFactory.createResultsCallHistory).toHaveLength(1)
+            expect(resultsFactory.createResultsCallHistory).toContainEqual({
+                resultsFile: 'sfca_results.json' // We have our added json file to parse
+            })
+
+            expect(dependencies.warnCallHistory).toHaveLength(expectedWarnings)
+        }
+    )
+
     it('Test user supplies non-default inputs with non-json output file', async () => {
         dependencies.getInputsReturnValue = {
             runArguments: '-f myFile.html --view table',

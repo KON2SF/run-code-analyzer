@@ -29,14 +29,15 @@ describe('RuntimeDependencies Code Coverage', () => {
         expect(endGroupSpy).toHaveBeenCalled()
     })
 
-    it('getInputs Code Coverage', async () => {
+    it('getInputs Code Coverage', () => {
         jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
             return `${name} Value`
         })
         const inputs: Inputs = dependencies.getInputs()
         expect(inputs).toEqual({
             runArguments: 'run-arguments Value',
-            resultsArtifactName: 'results-artifact-name Value'
+            resultsArtifactName: 'results-artifact-name Value',
+            githubToken: 'github-token Value'
         })
     })
 

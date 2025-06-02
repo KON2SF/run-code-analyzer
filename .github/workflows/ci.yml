@@ -45,6 +45,8 @@ jobs:
   test-action:
     name: GitHub Actions Test
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -76,7 +78,10 @@ jobs:
         uses: ./
         with:
           run-arguments: --view detail --workspace "./src,./__tests__" --output-file results.json
+          github-token: ${{github.token}}
 
       - name: Print Output
         id: output
-        run: echo "${{ steps.test-action.outputs.exit-code }}"
+        run: |
+          echo "${{ steps.test-action.outputs.exit-code }}"
+          echo "${{ steps.test-action.outputs.review-id }}"

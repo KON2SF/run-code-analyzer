@@ -80,9 +80,60 @@ export async function run(
         dependencies.endGroup()
 
         dependencies.startGroup(MESSAGES.STEP_LABELS.CREATING_SUMMARY)
-        const summaryMarkdown: string = summarizer.createSummaryMarkdown(results)
-        await dependencies.writeSummary(summaryMarkdown)
-        dependencies.endGroup()
+        if (dependencies.isPullRequest() && inputs.githubToken) {
+            let changedFiles: string[] = []
+            let couldReadChangedFiles = true
+            try {
+                dependencies.info(MESSAGES.CALCULATING_CHANGED_FILES)
+                changedFiles = await dependencies.getChangedFiles(inputs.githubToken)
+                dependencies.info(MESSAGES.CALCULATED_CHANGED_FILES)
+            } catch (error) {
+                couldReadChangedFiles = false
+                dependencies.warn(
+                    MESSAGE_FCNS.FAILED_TO_GET_CHANGED_FILES((error as Error).stack ?? (error as Error).message)
+                )
+            }
+
+            const summaryMarkdown = summarizer.createSummaryMarkdown(results, changedFiles)
+
+            if (couldReadChangedFiles) {
+                const summaryLink: string = await dependencies.createActionSummaryLink(inputs.githubToken)
+                const changedFilesSet: Set<string> = new Set(changedFiles)
+                const violationsInChangedFilesCount: number = results.getViolationsSortedBySeverity().filter(v => {
+                    return v
+                        .getLocations()
+                        .map(l => l.getFile())
+                        .some(f => f && changedFilesSet.has(f))
+                }).length
+                const summaryBody = MESSAGE_FCNS.REVIEW_BODY(
+                    results.getTotalViolationCount(),
+                    violationsInChangedFilesCount,
+                    summaryLink
+                )
+                try {
+                    dependencies.info(MESSAGES.ATTEMPTING_TO_CREATE_PR_REVIEW)
+                    const reviewId: number = await dependencies.createPullRequestReview(inputs.githubToken, summaryBody)
+                    dependencies.setOutput('review-id', `${reviewId}`)
+                    dependencies.info(MESSAGE_FCNS.CREATED_PR_REVIEW(reviewId))
+                } catch (error) {
+                    dependencies.warn(
+                        MESSAGE_FCNS.FAILED_TO_CREATE_REVIEW((error as Error).stack ?? (error as Error).message)
+                    )
+                }
+            }
+
+            await dependencies.writeSummary(summaryMarkdown)
+            dependencies.endGroup()
+        } else {
+            if (dependencies.isPullRequest()) {
+                dependencies.info(MESSAGES.PR_FOUND_WITHOUT_GH_TOKEN)
+            } else {
+                dependencies.info(MESSAGES.NOT_PR)
+            }
+            const summaryMarkdown = summarizer.createSummaryMarkdown(results)
+            await dependencies.writeSummary(summaryMarkdown)
+            dependencies.endGroup()
+        }
     } catch (error) {
         if (error instanceof Error) {
             dependencies.fail(`${MESSAGES.UNEXPECTED_ERROR}\n\n${error.stack}`)

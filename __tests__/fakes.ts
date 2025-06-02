@@ -15,6 +15,13 @@ export class FakeDependencies implements Dependencies {
         this.endGroupCallCount++
     }
 
+    isPullRequestReturnValue = false
+    isPullRequestCallCount = 0
+    isPullRequest(): boolean {
+        this.isPullRequestCallCount++
+        return this.isPullRequestReturnValue
+    }
+
     execCommandReturnValue: CommandOutput = { exitCode: 0, stdout: '', stderr: '' }
     execCommandCallHistory: { command: string; envVars: EnvironmentVariables; runSilently: boolean }[] = []
     async execCommand(command: string, envVars: EnvironmentVariables, runSilently: boolean): Promise<CommandOutput> {
@@ -25,12 +32,34 @@ export class FakeDependencies implements Dependencies {
     // We should match the default input values from action.yml here:
     getInputsReturnValue: Inputs = {
         runArguments: '--view detail --output-file sfca_results.json',
-        resultsArtifactName: 'salesforce-code-analyzer-results'
+        resultsArtifactName: 'salesforce-code-analyzer-results',
+        githubToken: 'dummyToken'
     }
     getInputsCallCount = 0
     getInputs(): Inputs {
         this.getInputsCallCount++
         return this.getInputsReturnValue
+    }
+
+    getChangedFilesCallback: () => Promise<string[]> = async () => []
+    getChangedFilesCallCount = 0
+    async getChangedFiles(_githubToken: string): Promise<string[]> {
+        this.getChangedFilesCallCount++
+        return this.getChangedFilesCallback()
+    }
+
+    createActionSummaryLinkReturnValue = 'www.example.com'
+    createActionSummaryLinkCallCount = 0
+    async createActionSummaryLink(_githubToken: string): Promise<string> {
+        this.createActionSummaryLinkCallCount++
+        return this.createActionSummaryLinkReturnValue
+    }
+
+    createPullRequestReviewCallback: () => Promise<number> = async () => 7
+    createPullRequestReviewCallCount = 0
+    async createPullRequestReview(_githubToken: string, _reviewBody: string): Promise<number> {
+        this.createPullRequestReviewCallCount++
+        return this.createPullRequestReviewCallback()
     }
 
     uploadArtifactCallHistory: { artifactName: string; artifactFiles: string[] }[] = []
@@ -180,6 +209,11 @@ export class FakeViolationLocation implements ViolationLocation {
     compareTo(other: ViolationLocation): number {
         this.compareToCallHistory.push({ other })
         return this.compareToReturnValue
+    }
+
+    getFileReturnValue = 'fakeFile'
+    getFile(): string {
+        return this.getFileReturnValue
     }
 
     toStringReturnValue = 'someLocation'
